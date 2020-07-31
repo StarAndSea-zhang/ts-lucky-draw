@@ -14,7 +14,7 @@
 
 <script lang="ts">
     import {Component, Vue} from "vue-property-decorator";
-    import HelloWorld from "./components/HelloWorld.vue";
+    import HelloWorld from "./components/hello-world.vue";
     import LuckDraw from "./components/vue-lucky-draw.vue";
 
     @Component({
