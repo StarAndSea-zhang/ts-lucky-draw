@@ -3,10 +3,10 @@
         <ul v-if="this.data.length!==0" class="w-rolling__list" :class=" {marquee_top:animate}">
             <li v-for="(item) in list" :key="item.id">
                 <div class="item">
-                    <span class="item-style">{{item.user_name}}</span>
+                    <span class="item-style">{{item.userName}}</span>
                     <span class="item-style">{{item.phone}}</span>
-                    <span class="item-style">{{item.prize_name}}</span>
-                    <span class="item-style">{{item.create_time}}</span>
+                    <span class="item-style">{{item.prizeName}}</span>
+                    <span class="item-style">{{item.createTime}}</span>
                 </div>
             </li>
         </ul>
@@ -37,33 +37,35 @@
                 animateTime: animateTime,
                 animate: false,
                 currentIndex: 5,
-                timer:null
+                timer: null
             }
         },
         watch: {
-            data(newVal) {
-                newVal.forEach(item => {
-                    item.create_time = new Date(parseInt(item.create_time) * 1000).toLocaleString();
-                    //对号码进行隐藏
-                    item.phone = item.phone.substr(0, 3) + "****" + item.phone.substr(7)
-                })
-                //获奖名单小于5个不进行滚动
-                if(newVal.length<5){
-                    clearInterval(this.timer);
+            data: {
+                immediate:true,
+                handler(newVal) {
+                    newVal.forEach(item => {
+                        item.createTime = new Date(parseInt(item.createTime) * 1000).toLocaleString();
+                        //对号码进行隐藏
+                        item.phone = item.phone.substr(0, 3) + "****" + item.phone.substr(7)
+                    })
+                    //获奖名单小于5个不进行滚动
+                    if (newVal.length < 5) {
+                        clearInterval(this.timer);
+                    }
+                    this.list = newVal.slice(0, 5);
                 }
-                this.list = newVal.slice(0, 5);
             }
         },
         mounted() {
-            const that = this;
             this.timer = setInterval(() => {
-                    if (this.currentIndex > this.data.length - 1) {
-                        this.currentIndex = 0;
-                    }
-                    that.list.push(this.data[this.currentIndex]);
-                    this.currentIndex++;
-                    that.list.shift();
-            }, that.animateTime);
+                if (this.currentIndex > this.data.length - 1) {
+                    this.currentIndex = 0;
+                }
+                this.list.push(this.data[this.currentIndex]);
+                this.currentIndex++;
+                this.list.shift();
+            }, this.animateTime);
             // 通过$once来监听定时器，在beforeDestroy钩子可以被清除。
             this.$once("hook:beforeDestroy", () => {
                 clearInterval(this.timer);
@@ -72,19 +74,17 @@
     }
 </script>
 
-<style lang="less" scoped>
-    @height-rolling-list: 60px;
-    @color-hightlight: rgb(255, 81, 30);
-    .w-rolling {
-        &__list {
-            width: 100%;
-            margin-top: 10px;
-            min-height: @height-rolling-list;
-        }
+<style scoped>
 
-        .van-empty {
-            padding: 0;
-        }
+    li {
+        list-style: none;
+    }
+
+    .w-rolling__list {
+        width: 100%;
+        margin-top: 10px;
+        min-height: 60px;
+        padding: 0;
     }
 
     .item {

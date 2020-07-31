@@ -35,6 +35,7 @@ npm run lint
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
 # 使用文档
+## 抽奖奖盘
 ~~~
 <template>
     <div id="app">
@@ -97,4 +98,9 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
         }
     }
 </script>
+~~~
+
+## 获奖滚动名单
+~~~       
+ <rolling-name-list :data="nameList"></rolling-name-list>
 ~~~
