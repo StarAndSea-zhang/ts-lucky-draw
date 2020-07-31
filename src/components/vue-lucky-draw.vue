@@ -28,7 +28,11 @@
             isPreview: {type: Boolean, default: false},          //是否做预览功能
             async: {type: Boolean, default: false},              // 开启异步抽奖
             value: {type: Number, default: 0},                   // 中奖的索引
-            awards: {type: Array, default: () =>{return []}},    // 奖品数组
+            awards: {
+                type: Array, default: () => {
+                    return []
+                }
+            },    // 奖品数组
             rate: {type: Number, default: 20},                   // 转盘速率
             radius: {type: Number, default: 200},                // 转盘半径
             textFontSize: {type: String, default: '10px'},       // 文字大小
@@ -36,9 +40,9 @@
             textColor: {type: String, default: '#d64737'},       // 文字颜色
             textMargin: {type: Number, default: 30},             // 文字距离边框距离
             textPadding: {type: Number, default: 0},             // 文字补偿宽度
-            panelImage:{type: String, default: 'background-lucky-panel'},//奖盘外边框背景图片
-            defaultAwardImage:{type: String, default: 'icon-award'},//默认奖品图片
-            buttonImage:{type: String, default: 'bth-lucky-draw'},//默认按钮背景图
+            panelImage: {type: String, default: 'background-lucky-panel'},//奖盘外边框背景图片
+            defaultAwardImage: {type: String, default: 'icon-award'},//默认奖品图片
+            buttonImage: {type: String, default: 'bth-lucky-draw'},//默认按钮背景图
         },
         watch: {
             value: {
@@ -94,11 +98,12 @@
             /**
              * 初始化转盘
              */
-            initCanvas() {
+            async initCanvas() {
                 this.canvas = document.querySelector('#canvas')
                 this.ctx = this.canvas.getContext('2d')
                 this.canvas.width = this.radius * 2
                 this.canvas.height = this.radius * 2
+                await this.beforeRender();
                 this.render()
                 this.startRotate()
             },
@@ -126,8 +131,11 @@
             loadHttpAwardImage(url) {
                 return new Promise((resolve, reject) => {
                     const image = new Image();
-                    image.src = url;
+
+                    // image.setAttribute('crossOrigin', 'anonymous');
                     image.crossOrigin = 'anonymous';
+
+                    image.src = url;
                     image.onload = () => {
                         resolve(image);
                     };
@@ -145,8 +153,10 @@
                 this.awards.forEach((item) => {
                     if (item.url) {
                         //如果加载http奖盘失败，加载默认本地图片
-                        promiseArr.push(this.loadHttpAwardImage(item.url).then(resolve=>{return resolve},reject=>{
-                           return this.loadLocalAwardImage(this.defaultAwardImage);
+                        promiseArr.push(this.loadHttpAwardImage(item.url).then(resolve => {
+                            return resolve
+                        }, reject => {
+                            return this.loadLocalAwardImage(this.defaultAwardImage);
                         }))
                     } else
                         promiseArr.push(this.loadLocalAwardImage(`icon-award`))
@@ -176,7 +186,7 @@
             },
 
             /**
-             * 绘制转盘
+             * 绘制转盘border
              */
             drawPanel() {
                 const ctx = this.ctx
@@ -219,7 +229,7 @@
             },
 
             /**
-             * 绘制奖品
+             * 绘制奖盘
              */
             drawPrizeBlock() {
                 const ctx = this.ctx
@@ -308,6 +318,7 @@
                 const canvas = this.canvas
                 const ctx = this.ctx
                 const canvasStyle = canvas.getAttribute('style');
+                this.beforeRender();
                 this.render()
                 //异步抽奖
                 if (this.async) {
@@ -379,19 +390,30 @@
                 // 这里额外加上后面的值，是为了让转盘多转动几圈，看上去更像是在抽奖
                 return distance + Math.PI * 10;
             },
-
-            render() {
-                this.loadAwardImageArr().then((list) => {
+            /**
+             * 加载完图片
+             */
+            beforeRender() {
+                return this.loadAwardImageArr().then((list) => {
                     this.awardImageArr = list.slice(0, this.awards.length);
-                    // console.log('this.awardImageArr', this.awardImageArr)
                     this.btnImage = list[list.length - 2];
                     this.backgroundImage = list[list.length - 1]
-                    this.drawPanel()
-                    this.drawPrizeBlock()
-                    this.drawButton()
-                    //绘制奖品图片
-                    this.drawAwardPic();
                 })
+            },
+            /**
+             * 注意两个问题：
+             * 奖盘组合绘制的顺序不能变，drawPanel画外层边框在层级最下面，最先画，奖品面板，按钮，奖品
+             * 转动的效果是靠不断绘制图片的，所以耗性能很大
+             */
+             render() {
+                // console.log('this.awardImageArr', this.awardImageArr)
+                //奖盘转动时，可以不画最外围边框
+                if (this.canBeClick)
+                    this.drawPanel()
+                this.drawPrizeBlock()
+                this.drawButton()
+                //绘制奖品图片
+                this.drawAwardPic();
             }
         }
     }
