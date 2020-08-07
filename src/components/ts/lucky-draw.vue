@@ -11,10 +11,11 @@
 
 <script lang="ts">
     import {Component, Vue,Prop,Watch} from "vue-property-decorator";
+    import {IAward} from './types/IAward';
 
     @Component
     export default class LuckyDraw extends Vue {
-        canvas: any|null= null;
+        canvas!: HTMLCanvasElement;
 
         ctx: any|null = null;
         startRadian= 0 // 初始角度
@@ -25,6 +26,7 @@
         backgroundImage=null
         //12个文字占据的高度
         maxTextLineHeight= 80
+        mAwards: Array<IAward> = [];
 
         //是否在运行中
         @Prop({type: Boolean, default: false})
@@ -40,55 +42,54 @@
 
         // 中奖的索引
         @Prop({type: Number, default: 0})
-        value = 10;
+        value = 0;
 
         // 奖品数组
         @Prop({
             type: Array, default: () => {
                 return []
-            }
-        }    )
-        private awards: Array<Record<string, any>> = [];
+            }})
+        private awards!: Array<IAward>;
 
         // 转盘速率
         @Prop({type: Number, default: 20})
-        rate !: number;
+        private rate !: number;
 
         // 转盘半径
         @Prop({type: Number, default: 200})
-        radius !: number;
+        private radius !: number;
 
         // 文字大小
         @Prop({type: String, default: '10px'})
-        textFontSize !: string;
+        private textFontSize !: string;
 
         // 文字行高
         @Prop({type: Number, default: 20})
-        lineHeight !: number
+        private lineHeight !: number;
 
         // 文字颜色
         @Prop({type: String, default: '#d64737'})
-        textColor !: string
+        private textColor !: string;
 
         // 文字距离边框距离
         @Prop({type: Number, default: 30})
-        textMargin !: number;
+        private textMargin !: number;
 
         // 文字补偿宽度
         @Prop({type: Number, default: 0})
-        textPadding !: number;
+        private textPadding !: number;
 
         //奖盘外边框背景图片
         @Prop({type: String, default: 'background-lucky-panel'})
-        panelImage !: string
+        private panelImage !: string
 
         //默认奖品图片
         @Prop({type: String, default: 'icon-award'})
-        defaultAwardImage !: string
+        private defaultAwardImage !: string
 
         //默认按钮背景图
         @Prop( {type: String, default: 'bth-lucky-draw'})
-        buttonImage !: string
+        private buttonImage !: string
 
         @Watch('isPreview',{
             immediate: true,
@@ -110,8 +111,8 @@
             // immediate: true,
             deep: true,
         })
-        handleAwardsChange(newVal: Array<Record<string, any>>) {
-            this.awards = newVal;
+        handleAwardsChange(newVal: Array<IAward>) {
+            this.mAwards = newVal;
         }
         get btnWidth() {
             return this.radius * 0.75;
@@ -147,12 +148,12 @@
          * 初始化转盘
          */
         async initCanvas() {
-            this.canvas = document.querySelector('#canvas')
+            this.canvas = (document.querySelector('#canvas') as HTMLCanvasElement);
             this.ctx = this.canvas!.getContext('2d')
             this.canvas.width = this.radius * 2
             this.canvas.height = this.radius * 2
             await this.beforeRender();
-            this.render()
+            this.render();
             this.startRotate()
         }
 
@@ -161,7 +162,7 @@
          */
         beforeRender() {
             return this.loadAwardImageArr().then((list: Array<any>) => {
-                this.awardImageArr = list.slice(0, this.awards.length);
+                this.awardImageArr = list.slice(0, this.mAwards.length);
                 this.btnImage = list[list.length - 2];
                 this.backgroundImage = list[list.length - 1]
             })
@@ -172,7 +173,7 @@
          */
         loadAwardImageArr() {
             const promiseArr = []
-            this.awards.forEach((item) => {
+            this.mAwards.forEach((item) => {
                 if (item.url) {
                     //如果加载http奖盘失败，加载默认本地图片
                     promiseArr.push(this.loadHttpAwardImage(item.url).then(resolve => {
@@ -194,7 +195,6 @@
         loadLocalAwardImage(url: string) {
             return new Promise((resolve, reject) => {
                 const image = new Image();
-                // images.src = iconSrc;
                 image.src = require('@/assets/images/' + url + '.png');
                 image.crossOrigin = 'Anonymous';
                 image.onload = () => {
@@ -228,8 +228,8 @@
         startRotate() {
             const canvas = this.canvas
             const ctx = this.ctx
-            const canvasStyle = canvas.getAttribute('style');
-            this.beforeRender();
+            const canvasStyle = canvas.getAttribute('style')!.toString();
+            // this.beforeRender();
             this.render()
             //异步抽奖
             if (this.async) {
@@ -278,12 +278,11 @@
             if (this.isPreview) return 0;
             if (this.isRunning) return 0;
             //每个扇叶的角度
-            const RadianGap = Math.PI * 2 / this.awards.length;
             const dom: HTMLElement|null = document.querySelector('.ldq-luck')
             const canvas = this.canvas
             const ctx = this.ctx
-            if (index < 0 || index >= this.awards.length) console.error('该索引的奖品不存在!')
-            if (!this.canBeClick || index < 0 || index >= this.awards.length) return false
+            if (index < 0 || index >= this.mAwards.length) console.error('该索引的奖品不存在!')
+            if (!this.canBeClick || index < 0 || index >= this.mAwards.length) return false
             this.currIndex = index
             this.canBeClick = false
             const loc = e ? this.windowToCanvas(canvas, e) : { // 模拟点击坐标
@@ -311,8 +310,8 @@
             // middleDegrees为奖品块的中间角度（最终停留都是以中间角度进行计算的）距离初始的startRadian的距离，distance就是当前奖品跑到指针位置要转动的距离。
             let middleDegrees = 0, distance = 0
             // 映射出每个奖品的middleDegrees
-            const awardsToDegreesList = this.awards.map((data, index) => {
-                const awardRadian = (Math.PI * 2) / this.awards.length
+            const awardsToDegreesList = this.mAwards.map((data, index) => {
+                const awardRadian = (Math.PI * 2) / this.mAwards.length
                 return awardRadian * index + (awardRadian * (index + 1) - awardRadian * index) / 2
             });
             // 此次抽奖应该中的奖品
@@ -345,21 +344,7 @@
             window.requestAnimationFrame(this.rotatePanel.bind(this, distance))
         }
 
-        /**
-         * 注意两个问题：
-         * 奖盘组合绘制的顺序不能变，drawPanel画外层边框在层级最下面，最先画，奖品面板，按钮，奖品
-         * 转动的效果是靠不断绘制图片的，所以耗性能很大
-         */
-        render() {
-            // console.log('this.awardImageArr', this.awardImageArr)
-            //奖盘转动时，可以不画最外围边框
-            if (this.canBeClick)
-                this.drawPanel()
-            this.drawPrizeBlock()
-            this.drawButton()
-            //绘制奖品图片
-            this.drawAwardPic();
-        }
+
 
         // 绘制按钮，以及按钮上start的文字
         drawButton() {
@@ -383,7 +368,7 @@
          */
         drawPrizeBlock() {
             const ctx = this.ctx
-            const awards = this.awards
+            const awards = this.mAwards
             // 根据初始角度来绘制奖品块
             let startRadian = this.startRadian
             const RadianGap = Math.PI * 2 / awards.length
@@ -421,7 +406,7 @@
         /**
          * 处理文字换行
          */
-        getLineTextList(ctx: CanvasText, text:string, maxLineWidth:number) {
+        getLineTextList(ctx: CanvasText, text: string, maxLineWidth: number) {
             maxLineWidth += this.textPadding
             const wordList = text.split('');
             let tempLine = '';
@@ -447,7 +432,7 @@
             const ctx = this.ctx;
             const width = this.imageWidth;
             const height = this.imageHeight;
-            const awards = this.awards
+            const awards = this.mAwards
             let startRadian = this.startRadian
             const RadianGap = Math.PI * 2 / awards.length
             let endRadian = startRadian + RadianGap
@@ -470,6 +455,21 @@
                 startRadian += RadianGap
                 endRadian += RadianGap
             }
+        }
+
+        /**
+         * 注意两个问题：
+         * 奖盘组合绘制的顺序不能变，drawPanel画外层边框在层级最下面，最先画，奖品面板，按钮，奖品
+         * 转动的效果是靠不断绘制图片的，所以耗性能很大
+         */
+        render() {
+            //奖盘转动时，可以不画最外围边框
+            if (this.canBeClick)
+                this.drawPanel()
+            this.drawPrizeBlock()
+            this.drawButton()
+            //绘制奖品图片
+            this.drawAwardPic();
         }
     }
 </script>
