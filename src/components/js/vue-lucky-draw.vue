@@ -319,7 +319,7 @@
                 const ctx = this.ctx
                 const canvasStyle = canvas.getAttribute('style');
                 this.beforeRender();
-                this.render()
+                this.render();
                 //异步抽奖
                 if (this.async) {
                     canvas.addEventListener('mousedown', e => {

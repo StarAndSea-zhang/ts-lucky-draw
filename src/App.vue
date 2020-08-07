@@ -18,8 +18,8 @@
 <script lang="ts">
     import {Component, Vue} from "vue-property-decorator";
     import HelloWorld from "./components/hello-world.vue";
-    import LuckDraw from "./components/vue-lucky-draw.vue";
-    import RollingNameList from './components/rolling-name-list.vue'
+    import LuckDraw from "./components/js/vue-lucky-draw.vue";
+    import RollingNameList from './components/js/rolling-name-list.vue'
 
     @Component({
         components: {
