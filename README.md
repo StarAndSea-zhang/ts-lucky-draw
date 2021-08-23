@@ -5,6 +5,7 @@
 在抽奖之前能不断点击按钮发起before-start，且点击非抽奖按钮也能启动抽奖，也就是点击奖盘也能启动before-start，
 一般before-start是用来请求抽到的奖品索引，所以请求只能发一次，且也是点击按钮才发送抽奖请求，这部分也有改善。
 原作者buuing 的github：https://github.com/buuing/vue-luck-draw
+# 演示： http://111.231.9.226:8081/
 # 项目注意
  🌈奖盘按钮背景图片需要自行处理大小，直接按我的图片算的概率，写的很死
  
